@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>حاسبة وقت DVR</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: linear-gradient(135deg, #e8f0fe, #f5f7fa);
+            color: #333;
+        }
+
+        .card {
+            width: 100%;
+            max-width: 450px;
+            margin: 20px auto;
+            background: #fff;
+            padding: 24px;
+            border-radius: 18px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+        }
+
+        h2 {
+            text-align: center;
+            color: #1a73e8;
+            margin: 0 0 8px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #777;
+            font-size: 13px;
+            margin-bottom: 22px;
+        }
+
+        label {
+            display: block;
+            margin-top: 16px;
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            margin-top: 7px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 15px;
+            background: #fff;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #1a73e8;
+            box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.12);
+        }
+
+        button {
+            width: 100%;
+            border: none;
+            padding: 13px;
+            margin-top: 20px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .calculate {
+            background: #1a73e8;
+            color: white;
+        }
+
+        .calculate:hover {
+            background: #1557b0;
+        }
+
+        .clear {
+            background: #f1f3f4;
+            color: #444;
+            margin-top: 10px;
+        }
+
+        .clear:hover {
+            background: #e4e6e8;
+        }
+
+        .result {
+            margin-top: 22px;
+            padding: 18px;
+            background: #e8f0fe;
+            border: 1px solid #1a73e8;
+            border-radius: 12px;
+            text-align: center;
+            display: none;
+        }
+
+        .result-title {
+            font-size: 14px;
+            color: #555;
+        }
+
+        .result-val {
+            font-size: 22px;
+            font-weight: bold;
+            color: #1967d2;
+            margin-top: 8px;
+            direction: ltr;
+        }
+
+        .difference {
+            margin-top: 12px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .copy-btn {
+            background: #34a853;
+            color: white;
+            margin-top: 14px;
+        }
+
+        .copy-btn:hover {
+            background: #278b43;
+        }
+
+        .error {
+            color: #d93025;
+            background: #fce8e6;
+            border: 1px solid #d93025;
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 15px;
+            display: none;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .info {
+            margin-top: 18px;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            font-size: 12px;
+            color: #666;
+            line-height: 1.7;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="card">
+
+    <h2>📹 حاسبة مراجعة DVR</h2>
+
+    <div class="subtitle">
+        احسب الوقت المطلوب على جهاز الـDVR لمراجعة أي حدث
+    </div>
+
+    <label for="dvrCurrent">
+        وقت جهاز DVR الحالي:
+    </label>
+
+    <input type="datetime-local" id="dvrCurrent">
+
+
+    <label for="realCurrent">
+        الوقت الفعلي الحقيقي الآن:
+    </label>
+
+    <input type="datetime-local" id="realCurrent">
+
+
+    <label for="targetTime">
+        وقت الحدث المراد مراجعته:
+    </label>
+
+    <input type="datetime-local" id="targetTime">
+
+
+    <div class="error" id="errorBox"></div>
+
+
+    <button class="calculate" onclick="calculate()">
+        🔍 احسب وقت الـ DVR
+    </button>
+
+    <button class="clear" onclick="clearAll()">
+        🗑️ مسح البيانات
+    </button>
+
+
+    <div class="result" id="resultBox">
+
+        <div class="result-title">
+            الوقت المطلوب تحديده على جهاز الـDVR:
+        </div>
+
+        <div class="result-val" id="resultValue"></div>
+
+        <div class="difference" id="differenceText"></div>
+
+        <button class="copy-btn" onclick="copyResult()">
+            📋 نسخ النتيجة
+        </button>
+
+    </div>
+
+
+    <div class="info">
+        <strong>طريقة الاستخدام:</strong><br>
+        1. أدخل الوقت الظاهر حاليًا على جهاز الـDVR.<br>
+        2. أدخل الوقت الحقيقي الحالي.<br>
+        3. أدخل وقت الحدث الذي تريد مراجعته.<br>
+        4. اضغط «احسب وقت الـDVR».
+    </div>
+
+</div>
+
+
+<script>
+
+    // تحويل التاريخ إلى قيمة مناسبة لحقل datetime-local
+    function formatForInput(date) {
+
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+
+        return `${year}-${month}-${day}T${hours}:${minutes}`;
+    }
+
+
+    // وضع الوقت الحالي تلقائيًا
+    function setCurrentTime() {
+
+        const now = new Date();
+
+        document.getElementById('realCurrent').value =
+            formatForInput(now);
+    }
+
+
+    // الحساب الرئيسي
+    function calculate() {
+
+        const dvrValue =
+            document.getElementById('dvrCurrent').value;
+
+        const realValue =
+            document.getElementById('realCurrent').value;
+
+        const targetValue =
+            document.getElementById('targetTime').value;
+
+
+        const errorBox =
+            document.getElementById('errorBox');
+
+        const resultBox =
+            document.getElementById('resultBox');
+
+
+        errorBox.style.display = 'none';
+        resultBox.style.display = 'none';
+
+
+        // التأكد من إدخال كل البيانات
+        if (!dvrValue || !realValue || !targetValue) {
+
+            showError('يرجى ملء جميع الحقول أولاً.');
+            return;
+        }
+
+
+        const dvrCurrent = new Date(dvrValue);
+        const realCurrent = new Date(realValue);
+        const targetTime = new Date(targetValue);
+
+
+        if (
+            isNaN(dvrCurrent.getTime()) ||
+            isNaN(realCurrent.getTime()) ||
+            isNaN(targetTime.getTime())
+        ) {
+
+            showError('يرجى التأكد من صحة التاريخ والوقت.');
+            return;
+        }
+
+
+        /*
+            فرق الوقت:
+
+            إذا كان DVR = 14:30
+            والوقت الحقيقي = 14:00
+
+            الفرق = +30 دقيقة
+
+            وإذا كان الحدث الحقيقي = 12:00
+
+            وقت DVR المطلوب = 12:30
+        */
+
+        const differenceMilliseconds =
+            dvrCurrent.getTime() - realCurrent.getTime();
+
+
+        const finalDVRTime =
+            new Date(
+                targetTime.getTime() + differenceMilliseconds
+            );
+
+
+        // تنسيق النتيجة
+        const options = {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: true
+        };
+
+
+        const formattedResult =
+            finalDVRTime.toLocaleString('ar-EG', options);
+
+
+        document.getElementById('resultValue').innerText =
+            formattedResult;
+
+
+        // حساب الفرق بالدقائق
+        const differenceMinutes =
+            Math.round(differenceMilliseconds / 60000);
+
+
+        let differenceText = '';
+
+
+        if (differenceMinutes > 0) {
+
+            differenceText =
+                `⏩ جهاز الـDVR متقدم عن الوقت الحقيقي بـ ${formatDifference(differenceMinutes)}`;
+
+        } else if (differenceMinutes < 0) {
+
+            differenceText =
+                `⏪ جهاز الـDVR متأخر عن الوقت الحقيقي بـ ${formatDifference(Math.abs(differenceMinutes))}`;
+
+        } else {
+
+            differenceText =
+                '✅ جهاز الـDVR مطابق للوقت الحقيقي';
+
+        }
+
+
+        document.getElementById('differenceText').innerText =
+            differenceText;
+
+
+        resultBox.style.display = 'block';
+    }
+
+
+    // تنسيق فرق الوقت
+    function formatDifference(totalMinutes) {
+
+        const days = Math.floor(totalMinutes / 1440);
+
+        const hours =
+            Math.floor((totalMinutes % 1440) / 60);
+
+        const minutes =
+            totalMinutes % 60;
+
+
+        let result = [];
+
+
+        if (days > 0) {
+            result.push(`${days} يوم`);
+        }
+
+        if (hours > 0) {
+            result.push(`${hours} ساعة`);
+        }
+
+        if (minutes > 0) {
+            result.push(`${minutes} دقيقة`);
+        }
+
+
+        return result.join(' و ') || '0 دقيقة';
+    }
+
+
+    // إظهار رسالة الخطأ
+    function showError(message) {
+
+        const errorBox =
+            document.getElementById('errorBox');
+
+        errorBox.innerText = message;
+        errorBox.style.display = 'block';
+    }
+
+
+    // نسخ النتيجة
+    function copyResult() {
+
+        const result =
+            document.getElementById('resultValue').innerText;
+
+        const difference =
+            document.getElementById('differenceText').innerText;
+
+
+        const text =
+            `وقت الـDVR المطلوب: ${result}\n${difference}`;
+
+
+        navigator.clipboard.writeText(text)
+            .then(() => {
+
+                const button =
+                    document.querySelector('.copy-btn');
+
+                const oldText = button.innerText;
+
+                button.innerText = '✅ تم النسخ';
+
+                setTimeout(() => {
+                    button.innerText = oldText;
+                }, 1500);
+
+            })
+            .catch(() => {
+
+                alert('لم يتمكن المتصفح من نسخ النتيجة.');
+
+            });
+    }
+
+
+    // مسح كل البيانات
+    function clearAll() {
+
+        document.getElementById('dvrCurrent').value = '';
+        document.getElementById('targetTime').value = '';
+
+        document.getElementById('errorBox').style.display = 'none';
+        document.getElementById('resultBox').style.display = 'none';
+
+        setCurrentTime();
+    }
+
+
+    // تشغيل الأداة لأول مرة
+    window.onload = function() {
+
+        setCurrentTime();
+
+    };
+
+</script>
+
+</body>
+</html>
